@@ -1,75 +1,42 @@
 #!/bin/sh
 
-
 INTERACTIVE=True
 ASK_TO_REBOOT=0
 
 
-
-
 do_install(){
 
-whiptail --yesno "Would you like Install the Kernel Package?" 20 60 2 \
+whiptail --yesno "Would you like to Install the Kernel Package?" 20 60 2 \
     --yes-button Yes --no-button No
   RET=$?
   if [ $RET -eq 0 ]; then
-        #Download and install kernel pack 
+
+		#Download and install kernel pack
 		sudo wget http://www.4dsystems.com.au/downloads/4DPi/4DPi-24-HAT/4DPi-24-HAT_kernel_R_1_0.tar.gz &&
-        sudo tar -xzvf 4DPi-24-HAT_kernel_R_1_0.tar.gz -C / &&
+        	sudo tar -xzvf 4DPi-24-HAT_kernel_R_1_0.tar.gz -C / &&
 		sudo apt-get -y  install libx11-dev libxext-dev libxi-dev x11proto-input-dev
-		#Set standard values to cmdline.txt
+		#Set standard values in cmdline.txt
 		sudo sed -i 's/$/ 4dpi.compress=7 4dpi.sclk=48000000 4dpi.rotate=0 /' /boot/cmdline.txt
 		#Download and install Xinput_calibrator
 		sudo wget http://github.com/downloads/tias/xinput_calibrator/xinput_calibrator-0.7.5.tar.gz
-        sudo tar -xzvf xinput_calibrator-0.7.5.tar.gz
+	        sudo tar -xzvf xinput_calibrator-0.7.5.tar.gz
 		cd xinput_calibrator-0.7.5
 		./configure
 		make
 		sudo make install
 		# Remove installation files
-		 sudo rm xinput_calibrator-0.7.5.tar.gz
-		 sudo rm -rf xinput_calibrator-0.7.5
-		 sudo rm -rf 4DPi-24-HAT_kernel_*.tar.gz	
+		sudo rm -rf xinput_calibrator-0.7.5.tar.gz &&
+		sudo rm -rf xinput_calibrator-0.7.5 &&
+		sudo rm -rf 4DPi-24-HAT_kernel_*.tar.gz	&&
+		do_selecthw
+		do_bootoption
+		do_rotate
 		whiptail --msgbox "Install Complete" 20 60 1
-		# Select Hardware
-		whiptail --yesno "Do you use Raspberry Pi 2?" 20 60 2 \
-		--yes-button Yes --no-button No
-		RET=$?
-		if [ $RET -eq 0 ]; then
-		sudo sed -i 's/kernel=kernel.*_hat.img/kernel=kernel7_hat.img/g' /boot/config.txt
-		whiptail --msgbox "Raspberry Pi set as Version 2" 20 60 1
-		return 0
-
-		elif [ $RET -eq 1 ]; then
-		sudo sed -i 's/kernel=kernel.*_hat.img/kernel=kernel_hat.img/g' /boot/config.txt
-		whiptail --msgbox "Raspberry Pi set as Version 1" 20 60 1
-		return 0
-		else
-		return $RET
-		fi
-		# Boot to GUI?
-		whiptail --yesno "Would you like to boot directly into GUI?" 20 60 2 \
-		--yes-button Yes --no-button No
-		RET=$?
-		if [ $RET -eq 0 ]; then
-		sudo sed -i -e '$i \sudo -u pi FRAMEBUFFER=/dev/fb1 startx &\n' /etc/rc.local &&
-		whiptail --msgbox "Boot to GUI enabled" 20 60 1
-		return 0
-		elif [ $RET -eq 1 ]; then
-		sudo sed -i '/sudo -u pi FRAMEBUFFER=/d' /etc/rc.local
-		whiptail --msgbox "Boot to console" 20 60 1
-		return 0
-		else
-		return $RET
-		fi
-		# Shutdown and plug in 4DPi
-		whiptail --title "Shutdown NOW" --msgbox "The Pi will shutdown now. When Pi is OFF please remove the power cable and plugin your 4DPi and apply power." 8 78
 		sudo shutdown now
-	
-	return 0
+		return 0
   elif [ $RET -eq 1 ]; then
-    whiptail --msgbox "Install Canceled" 20 60 1
-    return 0
+			whiptail --msgbox "Install Canceled" 20 60 1
+		return 0
   else
     return $RET
   fi
@@ -165,8 +132,6 @@ DISPLAY=:0.0 xinput_calibrator --output-type xorg.conf.d > tempcal.txt
 sudo sed -n '12,16 p' tempcal.txt > 99-calibration.conf
 sudo cp 99-calibration.conf /etc/X11/xorg.conf.d/
 }
-
-
 
 
 do_finish() {
